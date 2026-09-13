@@ -5,6 +5,7 @@ from world import World
 from world import LoomingObject
 from vision import VisionSystem
 from render import Renderer
+from brain import Brain
 
 WIDTH = 1000
 HEIGHT = 700
@@ -49,8 +50,12 @@ def run_sim() -> None:
 
     vision = VisionSystem()
 
+    brain = Brain()
+
     observation = None
+    activity = None
     trial_running = True
+    paused = False
     running = True
     trial_was_reset = False
 
@@ -68,9 +73,13 @@ def run_sim() -> None:
                 elif event.key == pygame.K_SPACE:
                     world = create_world(INITIAL_TRIAL)
                     vision.reset()
+                    brain.reset()
 
                     trial_running = True
+                    paused = False
                     trial_was_reset = True
+                elif event.key == pygame.K_p and trial_running:
+                    paused = not paused
                 elif event.key == pygame.K_UP:
                     world.threat.speed += SPEED_STEP
 
@@ -92,17 +101,25 @@ def run_sim() -> None:
         if not running:
             break
 
-        if trial_running:
-            world.step(dt)
+        if not paused:
+            if trial_running:
+                world.step(dt)
 
-        observation = vision.observe(world, dt)
+            observation = vision.observe(world, dt)
+            activity = brain.process(observation, dt)
 
-        if world.collision_occurred:
-            trial_running = False
+            if world.collision_occurred:
+                trial_running = False
+
+        if observation is None or activity is None:
+            observation = vision.observe(world, dt)
+            activity = brain.process(observation, dt)
 
         renderer.draw(
             world=world,
             observation=observation,
+            activity=activity,
+            paused=paused,
         )
 
     pygame.quit()

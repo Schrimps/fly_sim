@@ -2,6 +2,7 @@
 
 import math
 
+from brain import NeuralActivity
 import pygame
 
 from vision import VisualObservation
@@ -43,12 +44,14 @@ class Renderer:
         self,
         world: World,
         observation: VisualObservation,
+        activity: NeuralActivity,
+        paused: bool,
     ) -> None:
         self.screen.fill("white")
 
         self._draw_stimulus(observation)
         self._draw_separator()
-        self._draw_debug_info(world, observation)
+        self._draw_debug_info(world, observation, activity, paused)
 
         pygame.display.flip()
 
@@ -106,6 +109,8 @@ class Renderer:
         self,
         world: World,
         observation: VisualObservation,
+        activity: NeuralActivity,
+        paused: bool,
     ) -> None:
         threat = world.threat
 
@@ -124,20 +129,34 @@ class Renderer:
             observation.angular_velocity
         )
 
+        if world.collision_occurred:
+            status = "Collision"
+        elif paused:
+            status = "Paused"
+        else:
+            status = "Running"
+
         lines = [
+            f"Status:            {status}",
             f"Distance:          {threat.distance:.3f}",
             f"Object radius:     {threat.radius:.3f}",
             f"Approach speed:    {threat.speed:.3f}",
             f"Angular size:      {angular_size_deg:.2f} deg",
             f"Angular velocity:  {angular_velocity_deg:.2f} deg/s",
             f"TTC:               {ttc:.3f} s",
+            f"LPLC2:             {activity.lplc2:.3f}",
+            f"LC4:               {activity.lc4:.3f}",
         ]
 
         x = 20
         y = self.STIMULUS_HEIGHT + 15
         line_height = 28
+        lines_per_column = (len(lines) + 1) // 2
 
-        for line in lines:
+        for i, line in enumerate(lines):
+            column = i // lines_per_column
+            row = i % lines_per_column
+
             text = self.font.render(
                 line,
                 True,
@@ -146,7 +165,8 @@ class Renderer:
 
             self.screen.blit(
                 text,
-                (x, y),
+                (
+                    x + column * (self.width // 2),
+                    y + row * line_height,
+                ),
             )
-
-            y += line_height
