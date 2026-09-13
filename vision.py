@@ -6,7 +6,6 @@ import math
 class VisualObservation:
     angular_size: float
     angular_velocity: float
-    time_to_collision: float
 
     
 class VisionSystem:
@@ -14,6 +13,9 @@ class VisionSystem:
         self._previous_theta: float | None = None
 
     def observe(self, world: World, dt: float) -> VisualObservation:
+        if dt <= 0 or not math.isfinite(dt):
+          raise ValueError("dt must be positive")
+
         threat = world.threat
 
         theta = 2 * math.atan2(threat.radius, threat.distance)
@@ -25,15 +27,9 @@ class VisionSystem:
 
         self._previous_theta = theta
 
-        if threat.speed > 0:
-            ttc = threat.distance / threat.speed
-        else:
-            ttc = math.inf
-
         return VisualObservation(
             angular_size=theta,
             angular_velocity=theta_dot,
-            time_to_collision=ttc
         )
 
     def reset(self) -> None:

@@ -1,6 +1,4 @@
-def main():
-    print("Hello from fly-sim!")
-
+from sim import run_sim
 
 if __name__ == "__main__":
-    main()
+    run_sim()

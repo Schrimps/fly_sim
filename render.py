@@ -109,8 +109,10 @@ class Renderer:
     ) -> None:
         threat = world.threat
 
-        if threat.speed > 0:
-            ttc = threat.distance / threat.speed
+        if threat.distance <= 0:
+            ttc = 0.0
+        elif threat.speed > 0:
+            ttc = (threat.distance / threat.speed) if threat.speed > 0 else math.inf
         else:
             ttc = math.inf
 
